@@ -5,11 +5,11 @@ import { Send } from 'lucide-react';
 
 function ChatAi({problem}) {
     const [messages, setMessages] = useState([
-        { role: 'model', content: "Hi, How are you" },
-        { role: 'user', content: "I am Good" }
+        { role: 'model', parts:[{text: "Hi, How are you"}]},
+        { role: 'user', parts:[{text: "I am Good"}]}
     ]);
 
-    const { register, handleSubmit, reset,formState: {errors} } = useForm();
+    const { register, handleSubmit, reset, formState: {errors} } = useForm();
     const messagesEndRef = useRef(null);
 
     useEffect(() => {
@@ -17,26 +17,32 @@ function ChatAi({problem}) {
     }, [messages]);
 
     const onSubmit = async (data) => {
-        
-        setMessages(prev => [...prev, { role: 'user', content: data.message }]);
+        // ✅ FIX 1: Current message + previous history
+        const userMessage = { role: 'user', parts:[{text: data.message}] };
+        setMessages(prev => [...prev, userMessage]);
         reset();
 
         try {
-            
-            const response = await axiosClient.post("/chat/ai", {
-                message: data.message
+            // ✅ FIX 2: Backend expects messages array, not full history
+            const response = await axiosClient.post("/ai/chat", {
+                messages: [userMessage],  // ← Only current message
+                title: problem.title,
+                description: problem.description,
+                testCases: problem.visibleTestCases,
+                startCode: problem.startCode
             });
 
-           
+            // ✅ FIX 3: Backend returns hints, not message
             setMessages(prev => [...prev, { 
                 role: 'model', 
-                content: response.data.message || response.data.content 
+                parts:[{text: response.data.hints}]  // ← hints field
             }]);
+            
         } catch (error) {
             console.error("API Error:", error);
             setMessages(prev => [...prev, { 
                 role: 'model', 
-                content: "Sorry, I encountered an error" 
+                parts:[{text: "Sorry, AI hints unavailable right now 😅"}]
             }]);
         }
     };
@@ -50,20 +56,19 @@ function ChatAi({problem}) {
                         className={`chat ${msg.role === "user" ? "chat-end" : "chat-start"}`}
                     >
                         <div className="chat-bubble bg-base-200 text-base-content">
-                            {msg.content}
+                            {msg.parts[0].text}
                         </div>
                     </div>
                 ))}
                 <div ref={messagesEndRef} />
             </div>
-
             <form 
                 onSubmit={handleSubmit(onSubmit)} 
                 className="sticky bottom-0 p-4 bg-base-100 border-t"
             >
                 <div className="flex items-center">
                     <input 
-                        placeholder="Ask me anything" 
+                        placeholder="Ask DSA hint..." 
                         className="input input-bordered flex-1" 
                         {...register("message", { required: true, minLength: 2 })}
                     />
