@@ -10,11 +10,12 @@ import ProblemPage from "./pages/ProblemPage";
 import Admin from "./pages/Admin";
 import AdminDelete from "./components/AdminDelete";
 import AdminUpdate from "./components/AdminUpdate";
+import AIProblemTestCases from "./pages/AIProblemTestCases"; // ✅ ye already import hai
+
 function App() {
   const dispatch = useDispatch();
   const { isAuthenticated, user, loading } = useSelector((state) => state.auth);
 
-  // check initial authentication
   useEffect(() => {
     dispatch(checkAuth());
   }, [dispatch]);
@@ -32,18 +33,16 @@ function App() {
       <Routes>
         <Route
           path="/"
-          element={
-            isAuthenticated ? <Homepage></Homepage> : <Navigate to="/signup" />
-          }
-        ></Route>
+          element={isAuthenticated ? <Homepage /> : <Navigate to="/signup" />}
+        />
         <Route
           path="/login"
-          element={isAuthenticated ? <Navigate to="/" /> : <Login></Login>}
-        ></Route>
+          element={isAuthenticated ? <Navigate to="/" /> : <Login />}
+        />
         <Route
           path="/signup"
-          element={isAuthenticated ? <Navigate to="/" /> : <Signup></Signup>}
-        ></Route>
+          element={isAuthenticated ? <Navigate to="/" /> : <Signup />}
+        />
         <Route
           path="/admin"
           element={
@@ -84,7 +83,10 @@ function App() {
             )
           }
         />
-        <Route path="/problem/:problemId" element={<ProblemPage />}></Route>
+        <Route path="/problem/:problemId" element={<ProblemPage />} />
+
+        {/* ✅ NEW: AI test case generator page (sirf admin ke liye, sir ka use-case) */}
+        <Route path="/admin/ai-testcases" element={<AIProblemTestCases />} />
       </Routes>
     </>
   );
