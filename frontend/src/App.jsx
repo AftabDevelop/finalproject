@@ -10,7 +10,7 @@ import ProblemPage from "./pages/ProblemPage";
 import Admin from "./pages/Admin";
 import AdminDelete from "./components/AdminDelete";
 import AdminUpdate from "./components/AdminUpdate";
-import AIProblemTestCases from "./components/AIProblemTestCases"; // ✅ ye already import hai
+import AIProblemTestCases from "./components/AIProblemTestCases";
 
 function App() {
   const dispatch = useDispatch();
@@ -35,14 +35,17 @@ function App() {
           path="/"
           element={isAuthenticated ? <Homepage /> : <Navigate to="/signup" />}
         />
+
         <Route
           path="/login"
           element={isAuthenticated ? <Navigate to="/" /> : <Login />}
         />
+
         <Route
           path="/signup"
           element={isAuthenticated ? <Navigate to="/" /> : <Signup />}
         />
+
         <Route
           path="/admin"
           element={
@@ -53,6 +56,7 @@ function App() {
             )
           }
         />
+
         <Route
           path="/admin/create"
           element={
@@ -63,6 +67,7 @@ function App() {
             )
           }
         />
+
         <Route
           path="/admin/delete"
           element={
@@ -73,6 +78,7 @@ function App() {
             )
           }
         />
+
         <Route
           path="/admin/update"
           element={
@@ -83,10 +89,20 @@ function App() {
             )
           }
         />
+
         <Route path="/problem/:problemId" element={<ProblemPage />} />
 
-        {/* ✅ NEW: AI test case generator page (sirf admin ke liye, sir ka use-case) */}
-        <Route path="/admin/ai-testcases" element={<AIProblemTestCases />} />
+        {/* AI Test Case Generator – protected admin route */}
+        <Route
+          path="/admin/ai-testcases"
+          element={
+            isAuthenticated && user?.role === "admin" ? (
+              <AIProblemTestCases />
+            ) : (
+              <Navigate to="/" />
+            )
+          }
+        />
       </Routes>
     </>
   );
