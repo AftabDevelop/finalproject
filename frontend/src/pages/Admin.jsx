@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Edit, Trash2, Home, RefreshCw, Zap } from 'lucide-react';
+import { Plus, Edit, Trash2, Zap } from 'lucide-react';
 import { NavLink } from 'react-router';
 
 function Admin() {
@@ -32,6 +32,16 @@ function Admin() {
       color: 'btn-error',
       bgColor: 'bg-error/10',
       route: '/admin/delete'
+    },
+    // ✅ NEW: AI Test Case Generator card
+    {
+      id: 'ai-testcases',
+      title: 'AI Test Case Generator',
+      description: 'Auto-generate strong test cases for any DSA problem using AI',
+      icon: Zap,
+      color: 'btn-primary',
+      bgColor: 'bg-primary/10',
+      route: '/admin/ai-testcases'
     }
   ];
 
@@ -62,27 +72,25 @@ function Admin() {
                   <div className={`${option.bgColor} p-4 rounded-full mb-4`}>
                     <IconComponent size={32} className="text-base-content" />
                   </div>
-                  
+
                   {/* Title */}
                   <h2 className="card-title text-xl mb-2">
                     {option.title}
                   </h2>
-                  
+
                   {/* Description */}
                   <p className="text-base-content/70 mb-6">
                     {option.description}
                   </p>
-                  
+
                   {/* Action Button */}
                   <div className="card-actions">
-                    <div className="card-actions">
-                    <NavLink 
-                    to={option.route}
-                   className={`btn ${option.color} btn-wide`}
-                   >
-                   {option.title}
-                   </NavLink>
-                   </div>
+                    <NavLink
+                      to={option.route}
+                      className={`btn ${option.color} btn-wide`}
+                    >
+                      {option.title}
+                    </NavLink>
                   </div>
                 </div>
               </div>

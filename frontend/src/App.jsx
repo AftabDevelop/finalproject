@@ -10,7 +10,7 @@ import ProblemPage from "./pages/ProblemPage";
 import Admin from "./pages/Admin";
 import AdminDelete from "./components/AdminDelete";
 import AdminUpdate from "./components/AdminUpdate";
-import AIProblemTestCases from "./pages/AIProblemTestCases"; // ✅ ye already import hai
+import AIProblemTestCases from "./components/AIProblemTestCases"; // ✅ ye already import hai
 
 function App() {
   const dispatch = useDispatch();
