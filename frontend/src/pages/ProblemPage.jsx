@@ -4,14 +4,13 @@ import Editor from '@monaco-editor/react';
 import { useParams } from 'react-router';
 import axiosClient from "../utils/axiosClient"
 import SubmissionHistory from "../components/SubmissionHistory"
-import ChatAi from '../components/ChatAi';
+// import ChatAi from '../components/ChatAi';  // <-- ab iska use nahi, chahe to ye line bhi hata sakta hai
 
 const langMap = {
-        cpp: 'C++',
-        java: 'Java',
-        javascript: 'JavaScript'
+  cpp: 'C++',
+  java: 'Java',
+  javascript: 'JavaScript'
 };
-
 
 const ProblemPage = () => {
   const [problem, setProblem] = useState(null);
@@ -23,25 +22,23 @@ const ProblemPage = () => {
   const [activeLeftTab, setActiveLeftTab] = useState('description');
   const [activeRightTab, setActiveRightTab] = useState('code');
   const editorRef = useRef(null);
-  let {problemId}  = useParams();
+  let { problemId } = useParams();
 
   const { handleSubmit } = useForm();
 
- useEffect(() => {
+  useEffect(() => {
     const fetchProblem = async () => {
       setLoading(true);
       try {
-        
         const response = await axiosClient.get(`/problem/problemById/${problemId}`);
-       
-        
-        const initialCode = response.data.startCode.find(sc => sc.language === langMap[selectedLanguage]).initialCode;
+
+        const initialCode = response.data.startCode.find(
+          sc => sc.language === langMap[selectedLanguage]
+        ).initialCode;
 
         setProblem(response.data);
-        
         setCode(initialCode);
         setLoading(false);
-        
       } catch (error) {
         console.error('Error fetching problem:', error);
         setLoading(false);
@@ -54,7 +51,9 @@ const ProblemPage = () => {
   // Update code when language changes
   useEffect(() => {
     if (problem) {
-      const initialCode = problem.startCode.find(sc => sc.language === langMap[selectedLanguage]).initialCode;
+      const initialCode = problem.startCode.find(
+        sc => sc.language === langMap[selectedLanguage]
+      ).initialCode;
       setCode(initialCode);
     }
   }, [selectedLanguage, problem]);
@@ -74,7 +73,7 @@ const ProblemPage = () => {
   const handleRun = async () => {
     setLoading(true);
     setRunResult(null);
-    
+
     try {
       const response = await axiosClient.post(`/submission/run/${problemId}`, {
         code,
@@ -84,7 +83,6 @@ const ProblemPage = () => {
       setRunResult(response.data);
       setLoading(false);
       setActiveRightTab('testcase');
-      
     } catch (error) {
       console.error('Error running code:', error);
       setRunResult({
@@ -99,17 +97,16 @@ const ProblemPage = () => {
   const handleSubmitCode = async () => {
     setLoading(true);
     setSubmitResult(null);
-    
+
     try {
-        const response = await axiosClient.post(`/submission/submit/${problemId}`, {
-        code:code,
+      const response = await axiosClient.post(`/submission/submit/${problemId}`, {
+        code: code,
         language: selectedLanguage
       });
 
-       setSubmitResult(response.data);
-       setLoading(false);
-       setActiveRightTab('result');
-      
+      setSubmitResult(response.data);
+      setLoading(false);
+      setActiveRightTab('result');
     } catch (error) {
       console.error('Error submitting code:', error);
       setSubmitResult(null);
@@ -150,39 +147,31 @@ const ProblemPage = () => {
       <div className="w-1/2 flex flex-col border-r border-base-300">
         {/* Left Tabs */}
         <div className="tabs tabs-bordered bg-base-200 px-4">
-          <button 
+          <button
             className={`tab ${activeLeftTab === 'description' ? 'tab-active' : ''}`}
             onClick={() => setActiveLeftTab('description')}
           >
             Description
           </button>
-          <button 
+          <button
             className={`tab ${activeLeftTab === 'editorial' ? 'tab-active' : ''}`}
             onClick={() => setActiveLeftTab('editorial')}
           >
             Editorial
           </button>
-          <button 
+          <button
             className={`tab ${activeLeftTab === 'solutions' ? 'tab-active' : ''}`}
             onClick={() => setActiveLeftTab('solutions')}
           >
             Solutions
           </button>
-          <button 
+          <button
             className={`tab ${activeLeftTab === 'submissions' ? 'tab-active' : ''}`}
             onClick={() => setActiveLeftTab('submissions')}
           >
             Submissions
           </button>
-
-          <button 
-            className={`tab ${activeLeftTab === 'chatAI' ? 'tab-active' : ''}`}
-            onClick={() => setActiveLeftTab('chatAI')}
-          >
-            ChatAI
-          </button>
-
-
+          {/* ChatAI tab yahan se hata diya */}
         </div>
 
         {/* Left Content */}
@@ -239,7 +228,9 @@ const ProblemPage = () => {
                     {problem.referenceSolution?.map((solution, index) => (
                       <div key={index} className="border border-base-300 rounded-lg">
                         <div className="bg-base-200 px-4 py-2 rounded-t-lg">
-                          <h3 className="font-semibold">{problem?.title} - {solution?.language}</h3>
+                          <h3 className="font-semibold">
+                            {problem?.title} - {solution?.language}
+                          </h3>
                         </div>
                         <div className="p-4">
                           <pre className="bg-base-300 p-4 rounded text-sm overflow-x-auto">
@@ -247,7 +238,11 @@ const ProblemPage = () => {
                           </pre>
                         </div>
                       </div>
-                    )) || <p className="text-gray-500">Solutions will be available after you solve the problem.</p>}
+                    )) || (
+                      <p className="text-gray-500">
+                        Solutions will be available after you solve the problem.
+                      </p>
+                    )}
                   </div>
                 </div>
               )}
@@ -261,14 +256,7 @@ const ProblemPage = () => {
                 </div>
               )}
 
-              {activeLeftTab === 'chatAI' && (
-                <div className="prose max-w-none">
-                  <h2 className="text-xl font-bold mb-4">CHAT with AI</h2>
-                  <div className="whitespace-pre-wrap text-sm leading-relaxed">
-                    <ChatAi problem={problem}></ChatAi>
-                  </div>
-                </div>
-              )}
+              {/* ChatAI wala block bhi hata diya */}
             </>
           )}
         </div>
@@ -278,19 +266,19 @@ const ProblemPage = () => {
       <div className="w-1/2 flex flex-col">
         {/* Right Tabs */}
         <div className="tabs tabs-bordered bg-base-200 px-4">
-          <button 
+          <button
             className={`tab ${activeRightTab === 'code' ? 'tab-active' : ''}`}
             onClick={() => setActiveRightTab('code')}
           >
             Code
           </button>
-          <button 
+          <button
             className={`tab ${activeRightTab === 'testcase' ? 'tab-active' : ''}`}
             onClick={() => setActiveRightTab('testcase')}
           >
             Testcase
           </button>
-          <button 
+          <button
             className={`tab ${activeRightTab === 'result' ? 'tab-active' : ''}`}
             onClick={() => setActiveRightTab('result')}
           >
@@ -352,7 +340,7 @@ const ProblemPage = () => {
               {/* Action Buttons */}
               <div className="p-4 border-t border-base-300 flex justify-between">
                 <div className="flex gap-2">
-                  <button 
+                  <button
                     className="btn btn-ghost btn-sm"
                     onClick={() => setActiveRightTab('testcase')}
                   >
@@ -388,9 +376,9 @@ const ProblemPage = () => {
                     {runResult.success ? (
                       <div>
                         <h4 className="font-bold">✅ All test cases passed!</h4>
-                        <p className="text-sm mt-2">Runtime: {runResult.runtime+" sec"}</p>
-                        <p className="text-sm">Memory: {runResult.memory+" KB"}</p>
-                        
+                        <p className="text-sm mt-2">Runtime: {runResult.runtime + " sec"}</p>
+                        <p className="text-sm">Memory: {runResult.memory + " KB"}</p>
+
                         <div className="mt-4 space-y-2">
                           {runResult.testCases.map((tc, i) => (
                             <div key={i} className="bg-base-100 p-3 rounded text-xs">
@@ -416,8 +404,8 @@ const ProblemPage = () => {
                                 <div><strong>Input:</strong> {tc.stdin}</div>
                                 <div><strong>Expected:</strong> {tc.expected_output}</div>
                                 <div><strong>Output:</strong> {tc.stdout}</div>
-                                <div className={tc.status_id==3 ? 'text-green-600' : 'text-red-600'}>
-                                  {tc.status_id==3 ? '✓ Passed' : '✗ Failed'}
+                                <div className={tc.status_id == 3 ? 'text-green-600' : 'text-red-600'}>
+                                  {tc.status_id == 3 ? '✓ Passed' : '✗ Failed'}
                                 </div>
                               </div>
                             </div>
