@@ -19,12 +19,12 @@ const generateTestCases = async (req, res) => {
             {
               text: `You are a strict JSON generator.
 
-Generate diverse test cases for this DSA problem.
+Generate diverse HIDDEN test cases for this DSA problem.
 
 Title: ${title}
 Description: ${description}
 
-Return ONLY valid JSON. No markdown, no explanation, no backticks.
+Return ONLY valid JSON. No markdown, no explanation text outside JSON, no backticks.
 
 Exact format:
 {
@@ -34,22 +34,24 @@ Exact format:
 }
 
 Rules:
-- 5 to 8 test cases
-- Include edge, normal, and boundary cases
-- No solution code, no hints, no text outside JSON.`
+- Generate EXACTLY 4 test cases
+- Each test case MUST have a brief explanation (1–2 lines) describing why it is important
+- Cover a mix of edge, normal, boundary and tricky cases
+- No solution code, no hints, no extra fields, no text outside JSON.`
             }
           ]
         }
       ],
       generationConfig: {
-        maxOutputTokens: 500,
+        maxOutputTokens: 600,
         temperature: 0.2
       }
     });
 
+    // gemini-node SDK: text output
     let text = response.text || "";
 
-    // Try to extract JSON safely
+    // clean up to get pure JSON
     let jsonString = text.trim();
 
     // If model wrapped json in ```json ... ```
@@ -76,9 +78,18 @@ Rules:
       });
     }
 
+    // Safety: ensure array, cap at 4, guarantee explanation field
+    const rawCases = Array.isArray(parsed.testCases) ? parsed.testCases : [];
+    const limitedCases = rawCases.slice(0, 4).map((tc) => ({
+      input: tc.input,
+      expectedOutput: tc.expectedOutput,
+      explanation:
+        tc.explanation || "Hidden test to cover additional edge behaviour."
+    }));
+
     return res.status(201).json({
       success: true,
-      testCases: parsed.testCases || [],
+      testCases: limitedCases,
       problemTitle: title
     });
   } catch (err) {

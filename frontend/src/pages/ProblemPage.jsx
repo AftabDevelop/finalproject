@@ -2,9 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import Editor from '@monaco-editor/react';
 import { useParams } from 'react-router';
-import axiosClient from "../utils/axiosClient"
-import SubmissionHistory from "../components/SubmissionHistory"
-// import ChatAi from '../components/ChatAi';  // <-- ab iska use nahi, chahe to ye line bhi hata sakta hai
+import axiosClient from "../utils/axiosClient";
+import SubmissionHistory from "../components/SubmissionHistory";
 
 const langMap = {
   cpp: 'C++',
@@ -48,7 +47,6 @@ const ProblemPage = () => {
     fetchProblem();
   }, [problemId]);
 
-  // Update code when language changes
   useEffect(() => {
     if (problem) {
       const initialCode = problem.startCode.find(
@@ -70,6 +68,7 @@ const ProblemPage = () => {
     setSelectedLanguage(language);
   };
 
+  // ---------- RUN CODE (visible + hidden tests) ----------
   const handleRun = async () => {
     setLoading(true);
     setRunResult(null);
@@ -80,20 +79,35 @@ const ProblemPage = () => {
         language: selectedLanguage
       });
 
-      setRunResult(response.data);
+      console.log("RUN RESULT:", response.data);
+
+      setRunResult({
+        success: response.data.success,
+        runtime: response.data.runtime,
+        memory: response.data.memory,
+        errorMessage: response.data.errorMessage || null,
+        visibleTests: response.data.visibleTests || [],
+        hiddenTests: response.data.hiddenTests || [],
+      });
+
       setLoading(false);
       setActiveRightTab('testcase');
     } catch (error) {
       console.error('Error running code:', error);
       setRunResult({
         success: false,
-        error: 'Internal server error'
+        runtime: 0,
+        memory: 0,
+        errorMessage: 'Internal server error',
+        visibleTests: [],
+        hiddenTests: [],
       });
       setLoading(false);
       setActiveRightTab('testcase');
     }
   };
 
+  // ---------- SUBMIT CODE (hidden tests only) ----------
   const handleSubmitCode = async () => {
     setLoading(true);
     setSubmitResult(null);
@@ -171,7 +185,6 @@ const ProblemPage = () => {
           >
             Submissions
           </button>
-          {/* ChatAI tab yahan se hata diya */}
         </div>
 
         {/* Left Content */}
@@ -255,8 +268,6 @@ const ProblemPage = () => {
                   </div>
                 </div>
               )}
-
-              {/* ChatAI wala block bhi hata diya */}
             </>
           )}
         </div>
@@ -288,6 +299,7 @@ const ProblemPage = () => {
 
         {/* Right Content */}
         <div className="flex-1 flex flex-col">
+          {/* CODE TAB */}
           {activeRightTab === 'code' && (
             <div className="flex-1 flex flex-col">
               {/* Language Selector */}
@@ -305,7 +317,7 @@ const ProblemPage = () => {
                 </div>
               </div>
 
-              {/* Monaco Editor */}
+              {/* Editor */}
               <div className="flex-1">
                 <Editor
                   height="100%"
@@ -337,7 +349,7 @@ const ProblemPage = () => {
                 />
               </div>
 
-              {/* Action Buttons */}
+              {/* Buttons */}
               <div className="p-4 border-t border-base-300 flex justify-between">
                 <div className="flex gap-2">
                   <button
@@ -367,62 +379,138 @@ const ProblemPage = () => {
             </div>
           )}
 
+          {/* TESTCASE TAB – visible + hidden tests */}
           {activeRightTab === 'testcase' && (
             <div className="flex-1 p-4 overflow-y-auto">
               <h3 className="font-semibold mb-4">Test Results</h3>
-              {runResult ? (
-                <div className={`alert ${runResult.success ? 'alert-success' : 'alert-error'} mb-4`}>
-                  <div>
-                    {runResult.success ? (
-                      <div>
-                        <h4 className="font-bold">✅ All test cases passed!</h4>
-                        <p className="text-sm mt-2">Runtime: {runResult.runtime + " sec"}</p>
-                        <p className="text-sm">Memory: {runResult.memory + " KB"}</p>
 
-                        <div className="mt-4 space-y-2">
-                          {runResult.testCases.map((tc, i) => (
-                            <div key={i} className="bg-base-100 p-3 rounded text-xs">
-                              <div className="font-mono">
-                                <div><strong>Input:</strong> {tc.stdin}</div>
-                                <div><strong>Expected:</strong> {tc.expected_output}</div>
-                                <div><strong>Output:</strong> {tc.stdout}</div>
-                                <div className={'text-green-600'}>
-                                  {'✓ Passed'}
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    ) : (
-                      <div>
-                        <h4 className="font-bold">❌ Error</h4>
-                        <div className="mt-4 space-y-2">
-                          {runResult.testCases.map((tc, i) => (
-                            <div key={i} className="bg-base-100 p-3 rounded text-xs">
-                              <div className="font-mono">
-                                <div><strong>Input:</strong> {tc.stdin}</div>
-                                <div><strong>Expected:</strong> {tc.expected_output}</div>
-                                <div><strong>Output:</strong> {tc.stdout}</div>
-                                <div className={tc.status_id == 3 ? 'text-green-600' : 'text-red-600'}>
-                                  {tc.status_id == 3 ? '✓ Passed' : '✗ Failed'}
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
+              {/* Summary banner */}
+              {runResult ? (
+                <div className={`alert ${runResult.success ? 'alert-success' : 'alert-error'} mb-4 flex justify-between items-start`}>
+                  <div>
+                    <h4 className="font-bold">
+                      {runResult.success ? '✅ All test cases evaluated' : '❌ Some test cases failed'}
+                    </h4>
+                    {runResult.errorMessage && (
+                      <p className="text-sm text-red-100 mt-1">{runResult.errorMessage}</p>
                     )}
+                  </div>
+                  <div className="flex gap-2 text-xs">
+                    <span className="badge badge-outline">
+                      Runtime: {runResult.runtime} sec
+                    </span>
+                    <span className="badge badge-outline">
+                      Memory: {runResult.memory} KB
+                    </span>
                   </div>
                 </div>
               ) : (
                 <div className="text-gray-500">
-                  Click "Run" to test your code with the example test cases.
+                  Click "Run" to test your code with the example and hidden test cases.
+                </div>
+              )}
+
+              {runResult && (
+                <div className="mt-4 space-y-6">
+                  {/* Public test cases */}
+                  {Array.isArray(runResult.visibleTests) && runResult.visibleTests.length > 0 && (
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="font-semibold text-sm">Public Test Cases</h4>
+                        <span className="text-xs text-gray-400">
+                          {runResult.visibleTests.length} case(s)
+                        </span>
+                      </div>
+
+                      <div className="space-y-2">
+                        {runResult.visibleTests.map((tc, i) => (
+                          <div
+                            key={`public-${i}`}
+                            className="bg-base-200/70 border border-base-300 rounded-md p-3 text-xs font-mono"
+                          >
+                            <div className="flex justify-between mb-2">
+                              <span className="font-semibold">Case {i + 1}</span>
+                              <span
+                                className={`badge badge-sm ${
+                                  tc.statusId === 3 ? 'badge-success' : 'badge-error'
+                                }`}
+                              >
+                                {tc.statusId === 3 ? 'Passed' : 'Failed'}
+                              </span>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-2">
+                              <div>
+                                <span className="font-semibold">Input:</span> {tc.input}
+                              </div>
+                              <div>
+                                <span className="font-semibold">Expected:</span> {tc.expected}
+                              </div>
+                              <div>
+                                <span className="font-semibold">Output:</span> {tc.output}
+                              </div>
+                              <div className="col-span-2 text-gray-400">
+                                <span className="font-semibold">Status:</span> {tc.status}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Hidden / AI test cases */}
+                  {Array.isArray(runResult.hiddenTests) && runResult.hiddenTests.length > 0 && (
+                    <div className="border-t border-base-300 pt-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="font-semibold text-sm">Hidden / AI Test Cases</h4>
+                        <span className="text-xs text-gray-400">
+                          {runResult.hiddenTests.length} case(s)
+                        </span>
+                      </div>
+
+                      <div className="space-y-2">
+                        {runResult.hiddenTests.map((tc, i) => (
+                          <div
+                            key={`hidden-${i}`}
+                            className="bg-base-300/60 border border-base-300 rounded-md p-3 text-xs font-mono"
+                          >
+                            <div className="flex justify-between mb-2">
+                              <span className="font-semibold">Hidden {i + 1}</span>
+                              <span
+                                className={`badge badge-sm ${
+                                  tc.statusId === 3 ? 'badge-success' : 'badge-error'
+                                }`}
+                              >
+                                {tc.statusId === 3 ? 'Passed' : 'Failed'}
+                              </span>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-2">
+                              <div>
+                                <span className="font-semibold">Input:</span> {tc.input}
+                              </div>
+                              <div>
+                                <span className="font-semibold">Expected:</span> {tc.expected}
+                              </div>
+                              <div>
+                                <span className="font-semibold">Output:</span> {tc.output}
+                              </div>
+                              <div className="col-span-2 text-gray-400">
+                                <span className="font-semibold">Status:</span> {tc.status}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
           )}
 
+          {/* RESULT TAB (submit) */}
           {activeRightTab === 'result' && (
             <div className="flex-1 p-4 overflow-y-auto">
               <h3 className="font-semibold mb-4">Submission Result</h3>
@@ -434,8 +522,8 @@ const ProblemPage = () => {
                         <h4 className="font-bold text-lg">🎉 Accepted</h4>
                         <div className="mt-4 space-y-2">
                           <p>Test Cases Passed: {submitResult.passedTestCases}/{submitResult.totalTestCases}</p>
-                          <p>Runtime: {submitResult.runtime + " sec"}</p>
-                          <p>Memory: {submitResult.memory + "KB"} </p>
+                          <p>Runtime: {submitResult.runtime} sec</p>
+                          <p>Memory: {submitResult.memory} KB</p>
                         </div>
                       </div>
                     ) : (

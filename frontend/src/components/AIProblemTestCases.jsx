@@ -6,11 +6,13 @@ function AIProblemTestCases() {
   const [loading, setLoading] = useState(false);
   const [testCases, setTestCases] = useState([]);
   const [error, setError] = useState("");
+  const [info, setInfo] = useState("");
 
   const handleGenerate = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError("");
+    setInfo("");
     setTestCases([]);
 
     try {
@@ -26,9 +28,14 @@ function AIProblemTestCases() {
       if (!res.ok) {
         setError(data.error || "Something went wrong");
       } else {
-        setTestCases(data.testCases || []);
+        const cases = data.testCases || [];
+        setTestCases(cases);
+        setInfo(`AI ne ${cases.length} test cases generate kiye (backend).`);
+        if (cases.length > 0) {
+          alert(`AI ne ${cases.length} test cases generate kiye (backend).`);
+        }
       }
-    } catch {
+    } catch (err) {
       setError("Network error");
     } finally {
       setLoading(false);
@@ -83,6 +90,12 @@ function AIProblemTestCases() {
           >
             {loading ? "Generating..." : "Generate Test Cases"}
           </button>
+
+          {info && (
+            <p className="mt-2 text-sm text-green-400">
+              {info}
+            </p>
+          )}
         </form>
 
         {testCases.length > 0 && (
@@ -99,7 +112,9 @@ function AIProblemTestCases() {
                   <div className="font-semibold mb-1">
                     #{idx + 1} ({tc.explanation || "Test case"})
                   </div>
-                  <div><span className="font-medium">Input:</span> {tc.input}</div>
+                  <div>
+                    <span className="font-medium">Input:</span> {tc.input}
+                  </div>
                   <div>
                     <span className="font-medium">Expected Output:</span>{" "}
                     {tc.expectedOutput}

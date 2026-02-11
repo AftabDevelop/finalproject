@@ -17,12 +17,16 @@ const problemSchema = z.object({
       explanation: z.string().min(1, 'Explanation is required')
     })
   ).min(1, 'At least one visible test case required'),
+
+  // 🔥 Hidden test cases now include explanation
   hiddenTestCases: z.array(
     z.object({
       input: z.string().min(1, 'Input is required'),
-      output: z.string().min(1, 'Output is required')
+      output: z.string().min(1, 'Output is required'),
+      explanation: z.string().min(1, 'Explanation is required')
     })
   ).min(1, 'At least one hidden test case required'),
+
   startCode: z.array(
     z.object({
       language: z.enum(['C++', 'Java', 'JavaScript']),
@@ -43,6 +47,7 @@ function AdminPanel() {
     register,
     control,
     handleSubmit,
+    getValues,
     formState: { errors }
   } = useForm({
     resolver: zodResolver(problemSchema),
@@ -56,7 +61,9 @@ function AdminPanel() {
         { language: 'C++', completeCode: '' },
         { language: 'Java', completeCode: '' },
         { language: 'JavaScript', completeCode: '' }
-      ]
+      ],
+      visibleTestCases: [],
+      hiddenTestCases: []
     }
   });
 
@@ -78,6 +85,61 @@ function AdminPanel() {
     name: 'hiddenTestCases'
   });
 
+  // 🔥 Generate hidden test cases with AI (includes explanation)
+  const handleGenerateHiddenWithAI = async () => {
+    const { title, description } = getValues();
+
+    if (!title || !description) {
+      alert("Pehle Title aur Description bhar lo, tab hi AI se test cases banenge.");
+      return;
+    }
+
+    try {
+      const res = await fetch("http://localhost:3000/problem/generate-testcases", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ title, description })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert(data.error || "AI test cases generate karte waqt error aaya.");
+        return;
+      }
+
+      const cases = data.testCases || [];
+
+      if (!cases.length) {
+        alert("AI ne koi hidden test case nahi diya.");
+        return;
+      }
+
+      // Clear existing hidden cases (optional, but generally better UX)
+      // hiddenFields.forEach((_, idx) => removeHidden(idx));
+      // React Hook Form index issue avoid karne ke liye reverse:
+      for (let i = hiddenFields.length - 1; i >= 0; i--) {
+        removeHidden(i);
+      }
+
+      cases.forEach((tc, idx) => {
+        appendHidden({
+          input: tc.input ?? "",
+          output: tc.expectedOutput ?? "",
+          explanation:
+            (tc.explanation && tc.explanation.trim()) ||
+            `Auto-generated hidden test case #${idx + 1} to cover additional scenario.`
+        });
+      });
+
+      alert(`AI ne ${cases.length} hidden test cases add kar diye.`);
+    } catch (err) {
+      console.error(err);
+      alert("Network error: AI test cases generate nahi ho paye.");
+    }
+  };
+
   const onSubmit = async (data) => {
     try {
       await axiosClient.post('/problem/create', data);
@@ -91,7 +153,7 @@ function AdminPanel() {
   return (
     <div className="container mx-auto p-6">
       <h1 className="text-3xl font-bold mb-6">Create New Problem</h1>
-      
+
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* Basic Information */}
         <div className="card bg-base-100 shadow-lg p-6">
@@ -159,7 +221,7 @@ function AdminPanel() {
         {/* Test Cases */}
         <div className="card bg-base-100 shadow-lg p-6">
           <h2 className="text-xl font-semibold mb-4">Test Cases</h2>
-          
+
           {/* Visible Test Cases */}
           <div className="space-y-4 mb-6">
             <div className="flex justify-between items-center">
@@ -172,7 +234,7 @@ function AdminPanel() {
                 Add Visible Case
               </button>
             </div>
-            
+
             {visibleFields.map((field, index) => (
               <div key={field.id} className="border p-4 rounded-lg space-y-2">
                 <div className="flex justify-end">
@@ -184,19 +246,19 @@ function AdminPanel() {
                     Remove
                   </button>
                 </div>
-                
+
                 <input
                   {...register(`visibleTestCases.${index}.input`)}
                   placeholder="Input"
                   className="input input-bordered w-full"
                 />
-                
+
                 <input
                   {...register(`visibleTestCases.${index}.output`)}
                   placeholder="Output"
                   className="input input-bordered w-full"
                 />
-                
+
                 <textarea
                   {...register(`visibleTestCases.${index}.explanation`)}
                   placeholder="Explanation"
@@ -210,15 +272,24 @@ function AdminPanel() {
           <div className="space-y-4">
             <div className="flex justify-between items-center">
               <h3 className="font-medium">Hidden Test Cases</h3>
-              <button
-                type="button"
-                onClick={() => appendHidden({ input: '', output: '' })}
-                className="btn btn-sm btn-primary"
-              >
-                Add Hidden Case
-              </button>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={handleGenerateHiddenWithAI}
+                  className="btn btn-sm btn-secondary"
+                >
+                  Generate with AI
+                </button>
+                <button
+                  type="button"
+                  onClick={() => appendHidden({ input: '', output: '', explanation: '' })}
+                  className="btn btn-sm btn-primary"
+                >
+                  Add Hidden Case
+                </button>
+              </div>
             </div>
-            
+
             {hiddenFields.map((field, index) => (
               <div key={field.id} className="border p-4 rounded-lg space-y-2">
                 <div className="flex justify-end">
@@ -230,17 +301,23 @@ function AdminPanel() {
                     Remove
                   </button>
                 </div>
-                
+
                 <input
                   {...register(`hiddenTestCases.${index}.input`)}
                   placeholder="Input"
                   className="input input-bordered w-full"
                 />
-                
+
                 <input
                   {...register(`hiddenTestCases.${index}.output`)}
                   placeholder="Output"
                   className="input input-bordered w-full"
+                />
+
+                <textarea
+                  {...register(`hiddenTestCases.${index}.explanation`)}
+                  placeholder="Explanation"
+                  className="textarea textarea-bordered w-full"
                 />
               </div>
             ))}
@@ -250,14 +327,14 @@ function AdminPanel() {
         {/* Code Templates */}
         <div className="card bg-base-100 shadow-lg p-6">
           <h2 className="text-xl font-semibold mb-4">Code Templates</h2>
-          
+
           <div className="space-y-6">
             {[0, 1, 2].map((index) => (
               <div key={index} className="space-y-2">
                 <h3 className="font-medium">
                   {index === 0 ? 'C++' : index === 1 ? 'Java' : 'JavaScript'}
                 </h3>
-                
+
                 <div className="form-control">
                   <label className="label">
                     <span className="label-text">Initial Code</span>
@@ -270,7 +347,7 @@ function AdminPanel() {
                     />
                   </pre>
                 </div>
-                
+
                 <div className="form-control">
                   <label className="label">
                     <span className="label-text">Reference Solution</span>
