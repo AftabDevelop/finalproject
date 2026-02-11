@@ -496,6 +496,13 @@ const ProblemPage = () => {
                               <div>
                                 <span className="font-semibold">Output:</span> {tc.output}
                               </div>
+
+                              {tc.explanation && (
+                                <div className="col-span-2 text-gray-300">
+                                  <span className="font-semibold">Explanation:</span> {tc.explanation}
+                                </div>
+                              )}
+
                               <div className="col-span-2 text-gray-400">
                                 <span className="font-semibold">Status:</span> {tc.status}
                               </div>

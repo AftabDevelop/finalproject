@@ -156,14 +156,19 @@ const runCode = async (req, res) => {
       }
     }
 
+    // 🔥 mapResult me explanation add kiya
     const mapResult = (tests, casesFromDb) =>
-      tests.map((t, idx) => ({
-        input: casesFromDb[idx].input,
-        expected: casesFromDb[idx].output,
-        output: (t.stdout || "").trim(),
-        statusId: t.status_id,
-        status: t.status && t.status.description,
-      }));
+      tests.map((t, idx) => {
+        const orig = casesFromDb[idx] || {};
+        return {
+          input: orig.input,
+          expected: orig.output,
+          explanation: orig.explanation, // yaha se UI ko milega explanation
+          output: (t.stdout || "").trim(),
+          statusId: t.status_id,
+          status: t.status && t.status.description,
+        };
+      });
 
     const visibleTests = mapResult(visibleResults, problem.visibleTestCases);
     const hiddenTests = mapResult(hiddenResults, problem.hiddenTestCases);
@@ -182,6 +187,5 @@ const runCode = async (req, res) => {
     return res.status(500).send("Internal Server Error " + err);
   }
 };
-
 
 module.exports = { submitCode, runCode };

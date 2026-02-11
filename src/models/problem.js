@@ -17,9 +17,11 @@ const problemSchema = new Schema({
   },
   tags: {
     type: String,
-    enum: ['array', 'linkedlist', 'graph', 'dp'], // keep consistent
+    enum: ['array', 'linkedlist', 'graph', 'dp'],
     required: true
   },
+
+  // Visible / public test cases
   visibleTestCases: [
     {
       input: {
@@ -36,6 +38,8 @@ const problemSchema = new Schema({
       }
     }
   ],
+
+  // Hidden / AI test cases (with explanation)
   hiddenTestCases: [
     {
       input: {
@@ -45,9 +49,14 @@ const problemSchema = new Schema({
       output: {
         type: String,
         required: true
+      },
+      explanation: {          // 🔥 newly added
+        type: String,
+        required: true
       }
     }
   ],
+
   startCode: [
     {
       language: {
@@ -60,6 +69,7 @@ const problemSchema = new Schema({
       }
     }
   ],
+
   referenceSolution: [
     {
       language: {
@@ -72,13 +82,14 @@ const problemSchema = new Schema({
       }
     }
   ],
+
   problemCreator: {
     type: Schema.Types.ObjectId,
-    ref: 'User', // Make sure your user model is capitalized 'User' if you have that
+    ref: 'User',
     required: true
   }
 });
 
-// Name the model 'Problem' for clarity
+// Name the model 'Problem'
 const Problem = mongoose.model('problem', problemSchema);
 module.exports = Problem;
