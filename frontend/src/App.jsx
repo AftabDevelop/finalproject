@@ -11,10 +11,14 @@ import Admin from "./pages/Admin";
 import AdminDelete from "./components/AdminDelete";
 import AdminUpdate from "./components/AdminUpdate";
 import AIProblemTestCases from "./components/AIProblemTestCases";
+import OnboardingPage from "./pages/OnboardingPage";
+import LandingPage from "./pages/LandingPage";
 
 function App() {
   const dispatch = useDispatch();
-  const { isAuthenticated, user, loading } = useSelector((state) => state.auth);
+  const { isAuthenticated, user, loading } = useSelector(
+    (state) => state.auth
+  );
 
   useEffect(() => {
     dispatch(checkAuth());
@@ -31,11 +35,16 @@ function App() {
   return (
     <>
       <Routes>
+        {/* Home: unauth -> Landing, auth -> Homepage */}
         <Route
           path="/"
-          element={isAuthenticated ? <Homepage /> : <Navigate to="/signup" />}
+          element={isAuthenticated ? <Homepage /> : <LandingPage />}
         />
 
+        {/* Onboarding (signup se pehle, auth required nahi) */}
+        <Route path="/onboarding" element={<OnboardingPage />} />
+
+        {/* Auth routes */}
         <Route
           path="/login"
           element={isAuthenticated ? <Navigate to="/" /> : <Login />}
@@ -46,6 +55,7 @@ function App() {
           element={isAuthenticated ? <Navigate to="/" /> : <Signup />}
         />
 
+        {/* Admin routes */}
         <Route
           path="/admin"
           element={
@@ -90,6 +100,7 @@ function App() {
           }
         />
 
+        {/* Problem page */}
         <Route path="/problem/:problemId" element={<ProblemPage />} />
 
         {/* AI Test Case Generator – protected admin route */}

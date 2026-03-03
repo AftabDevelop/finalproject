@@ -1,2 +1,29 @@
 @import "tailwindcss";
 @plugin "daisyui";
+
+@keyframes wordFadeSlide {
+  0% {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  10% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  80% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+
+.rotating-word {
+  position: absolute;
+  left: 0;
+  top: 0;
+  animation: wordFadeSlide 2s ease-in-out forwards;
+  white-space: nowrap;
+}
