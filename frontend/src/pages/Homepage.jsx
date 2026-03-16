@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { NavLink } from "react-router";
+import { NavLink } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import axiosClient from "../utils/axiosClient";
 import { logoutUser } from "../authSlice";
@@ -27,9 +27,7 @@ function Homepage() {
 
     const fetchSolvedProblems = async () => {
       try {
-        const { data } = await axiosClient.get(
-          "/problem/problemSolvedByUser"
-        );
+        const { data } = await axiosClient.get("/problem/problemSolvedByUser");
         setSolvedProblems(data);
       } catch (error) {
         console.error("Error fetching solved problems:", error);
@@ -50,12 +48,9 @@ function Homepage() {
       filters.difficulty === "all" ||
       problem.difficulty === filters.difficulty;
 
-    const tagMatch =
-      filters.tag === "all" || problem.tags === filters.tag;
+    const tagMatch = filters.tag === "all" || problem.tags === filters.tag;
 
-    const isSolved = solvedProblems.some(
-      (sp) => sp._id === problem._id
-    );
+    const isSolved = solvedProblems.some((sp) => sp._id === problem._id);
 
     const statusMatch =
       filters.status === "all" ||
@@ -66,17 +61,42 @@ function Homepage() {
 
   return (
     <div className="min-h-screen bg-base-200">
-      {/* Navigation Bar */}
-      <nav className="navbar bg-base-100 shadow-sm px-4">
-        <div className="flex-1">
+      {/* Navbar */}
+      <nav className="navbar bg-base-100 shadow-sm px-6">
+        <div className="flex-1 flex items-center gap-6">
           <NavLink
             to="/"
             className="btn btn-ghost px-0 text-xl font-semibold tracking-tight"
           >
             CodeJudge
           </NavLink>
+
+          {/* Center nav links */}
+          <div className="hidden md:flex items-center gap-4 text-xs md:text-sm">
+            <NavLink
+              to="/"
+              className={({ isActive }) =>
+                `hover:text-primary ${
+                  isActive ? "text-primary" : "text-base-content/70"
+                }`
+              }
+            >
+              Problems
+            </NavLink>
+            <NavLink
+              to="/leaderboard"
+              className={({ isActive }) =>
+                `hover:text-primary ${
+                  isActive ? "text-primary" : "text-base-content/70"
+                }`
+              }
+            >
+              Leaderboard
+            </NavLink>
+          </div>
         </div>
-        <div className="flex-none gap-4">
+
+        <div className="flex-none gap-4 items-center">
           {user && (
             <div className="dropdown dropdown-end">
               <div tabIndex={0} className="btn btn-ghost btn-sm px-3">
@@ -98,18 +118,21 @@ function Homepage() {
       </nav>
 
       {/* Main Content */}
-      <div className="container mx-auto px-4 py-6">
+      <div className="max-w-5xl mx-auto px-4 py-6">
         {/* Header + count */}
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <h1 className="text-lg font-semibold tracking-tight">
-            Problems
-          </h1>
+          <div>
+            <h1 className="text-lg font-semibold tracking-tight">Problems</h1>
+            <p className="text-[11px] text-base-content/60">
+              Practice and improve your coding skills
+            </p>
+          </div>
           <span className="text-xs text-base-content/60">
             {filteredProblems.length} of {problems.length} problems
           </span>
         </div>
 
-        {/* Filters row */}
+        {/* Filters */}
         <div className="flex flex-wrap gap-3 mb-6">
           <select
             className="select select-sm select-bordered"
@@ -150,7 +173,7 @@ function Homepage() {
           </select>
         </div>
 
-        {/* Problems List */}
+        {/* Problems list */}
         <div className="grid gap-3">
           {filteredProblems.map((problem) => {
             const isSolved = solvedProblems.some(

@@ -1,7 +1,7 @@
 const Problem = require("../models/problem");
 const Submission = require("../models/submission");
+const User = require("../models/user");
 const { getLanguageById, submitBatch, submitToken } = require("../utils/problemUtility");
-
 
 // ============ Submit Code (Hidden Test Cases) ============
 const submitCode = async (req, res) => {
@@ -73,9 +73,35 @@ const submitCode = async (req, res) => {
 
     await submittedResult.save();
 
-    if (status === "accepted" && !req.result.problemSolved.includes(problemId)) {
-      req.result.problemSolved.push(problemId);
-      await req.result.save();
+    // ⭐ Leaderboard points (first AC only per problem per user)
+    if (status === "accepted") {
+      const user = await User.findById(userId);
+
+      if (user) {
+        const alreadySolved = (user.problemSolved || []).some(
+          (pid) => pid.toString() === problemId.toString()
+        );
+
+        if (!alreadySolved) {
+          let pointsToAdd = 0;
+
+          if (problem.difficulty === "easy") {
+            pointsToAdd = 10;
+            user.easySolved = (user.easySolved || 0) + 1;
+          } else if (problem.difficulty === "medium") {
+            pointsToAdd = 25;
+            user.mediumSolved = (user.mediumSolved || 0) + 1;
+          } else if (problem.difficulty === "hard") {
+            pointsToAdd = 50;
+            user.hardSolved = (user.hardSolved || 0) + 1;
+          }
+
+          user.totalPoints = (user.totalPoints || 0) + pointsToAdd;
+          user.problemSolved.push(problemId);
+
+          await user.save();
+        }
+      }
     }
 
     const accepted = status === "accepted";
@@ -93,7 +119,6 @@ const submitCode = async (req, res) => {
     return res.status(500).send("Internal Server Error " + err);
   }
 };
-
 
 // ============ Run Code (Visible + Hidden Test Cases) ============
 const runCode = async (req, res) => {
@@ -156,14 +181,13 @@ const runCode = async (req, res) => {
       }
     }
 
-    // 🔥 mapResult me explanation add kiya
     const mapResult = (tests, casesFromDb) =>
       tests.map((t, idx) => {
         const orig = casesFromDb[idx] || {};
         return {
           input: orig.input,
           expected: orig.output,
-          explanation: orig.explanation, // yaha se UI ko milega explanation
+          explanation: orig.explanation,
           output: (t.stdout || "").trim(),
           statusId: t.status_id,
           status: t.status && t.status.description,

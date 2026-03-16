@@ -44,11 +44,29 @@ const userSchema = new Schema(
           ref: "problem",
         },
       ],
-      // unique: true,
     },
+
     password: {
       type: String,
       required: true,
+    },
+
+    // leaderboard fields
+    totalPoints: {
+      type: Number,
+      default: 0,
+    },
+    easySolved: {
+      type: Number,
+      default: 0,
+    },
+    mediumSolved: {
+      type: Number,
+      default: 0,
+    },
+    hardSolved: {
+      type: Number,
+      default: 0,
     },
   },
   { timestamps: true }

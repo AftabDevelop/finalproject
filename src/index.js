@@ -6,23 +6,31 @@ require("dotenv").config({
 });
 const redisClient = require("./config/redis");
 const validate = require("./utils/validator");
-const cookieParser = require("cookie-parser"); // ✅ import as cookieParser
+const cookieParser = require("cookie-parser");
+const cors = require("cors");
+
 const authRouter = require("./routes/userAuth");
 const problemrouter = require("./routes/problemcreator");
 const submitRouter = require("./routes/submit");
-const cors = require('cors');
+const leaderboardRoutes = require("./routes/leaderboard");
 
-app.use(cors({
-  origin: 'http://localhost:5173', // frontend ka URL
-  credentials: true,               // allow cookies
-}));
+// CORS (frontend URL + cookies allowed)
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+    credentials: true,
+  })
+);
 
+// Core middlewares
 app.use(express.json());
-app.use(cookieParser()); // ✅ use cookieParser()
+app.use(cookieParser());
+
+// Routes
 app.use("/user", authRouter);
 app.use("/problem", problemrouter);
 app.use("/submission", submitRouter);
-
+app.use("/api", leaderboardRoutes); // -> /api/leaderboard
 
 const Initalizeconnection = async () => {
   try {
@@ -35,4 +43,5 @@ const Initalizeconnection = async () => {
     console.log(error.message);
   }
 };
+
 Initalizeconnection();

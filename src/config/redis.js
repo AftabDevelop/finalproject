@@ -1,13 +1,20 @@
-const { createClient } = require('redis');
+// config/redis.js
 
-const client = createClient({
-    username: 'default',
-    password: process.env.PASS,
-    socket: {
-        host: 'redis-10318.c12.us-east-1-4.ec2.redns.redis-cloud.com',
-        port: 10318
-    }
-});
+// Fake Redis client: same methods as used in project, but all no-op.
 
+const fakeClient = {
+  connect: async () => {},
+  quit: async () => {},
 
-module.exports = client;
+  set: async () => {},
+  get: async () => null,
+  del: async () => {},
+  expire: async () => {},
+  expireAt: async () => {},
+
+  exists: async () => 0,   // 🔥 add: used in auth blacklist check
+
+  on: () => {},
+};
+
+module.exports = fakeClient;
